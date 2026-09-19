@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import puppeteer from 'puppeteer';
 
 const NEW_URL = 'https://maruzen-toy.com/photo/NEW/';
 const X_URL = 'https://maruzen-toy.com/photo/X';
@@ -11,17 +12,21 @@ const MAX_DISCORD_LEN = 2000;
 const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
-async function fetchWithRetry(url) {
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      const res = await fetch(url, { headers: { 'User-Agent': UA } });
-      if (res.ok) return await res.text();
-      console.warn(`[warn] ${url} -> HTTP ${res.status} (attempt ${attempt})`);
-    } catch (err) {
-      console.warn(`[warn] ${url} -> ${err.message} (attempt ${attempt})`);
-    }
+async function fetchWithPuppeteer(url) {
+  let browser;
+  try {
+    browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
+    await page.setUserAgent(UA);
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+    const html = await page.content();
+    await browser.close();
+    return html;
+  } catch (err) {
+    console.warn(`[warn] ${url} -> ${err.message}`);
+    if (browser) await browser.close();
+    return null;
   }
-  return null;
 }
 
 // サイトのマークアップに依存しすぎないよう、全文をブロック単位で行分割し、
@@ -143,7 +148,7 @@ async function main() {
   const isFirstRun = !state.initialized;
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
 
-  const [newHtml, xHtml] = await Promise.all([fetchWithRetry(NEW_URL), fetchWithRetry(X_URL)]);
+  const [newHtml, xHtml] = await Promise.all([fetchWithPuppeteer(NEW_URL), fetchWithPuppeteer(X_URL)]);
 
   if (!newHtml && !xHtml) {
     console.log('両ページとも取得に失敗しました。今回は状態を更新せず終了します。');
