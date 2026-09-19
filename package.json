@@ -1,13 +1,13 @@
 {
   "name": "maruzen-watcher",
   "version": "1.0.0",
-  "private": true,
   "type": "module",
-  "description": "丸善商店の新製品コーナー・超特価コーナーを監視し、新着があればDiscordに通知する",
-  "scripts": {
-    "check": "node check.mjs"
-  },
+  "description": "丸善商店の新着商品監視ツール",
   "dependencies": {
-    "cheerio": "^1.0.0"
+    "cheerio": "^1.0.0-rc.12",
+    "puppeteer": "^25.11.0"
+  },
+  "scripts": {
+    "test": "node check.mjs"
   }
 }
