@@ -15,7 +15,7 @@ const UA =
 async function fetchWithPuppeteer(url) {
   let browser;
   try {
-    browser = await puppeteer.launch({ headless: true });
+    browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const page = await browser.newPage();
     await page.setUserAgent(UA);
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
@@ -29,8 +29,6 @@ async function fetchWithPuppeteer(url) {
   }
 }
 
-// サイトのマークアップに依存しすぎないよう、全文をブロック単位で行分割し、
-// 「商品コード：」の行を手がかりに前後数行から商品名・価格を推定する。
 function extractProducts(html) {
   const $ = cheerio.load(html);
   $('script, style').remove();
