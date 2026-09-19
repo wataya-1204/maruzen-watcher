@@ -2,15 +2,8 @@ name: Maruzen Watcher
 
 on:
   schedule:
-    - cron: '13 * * * *'
-  workflow_dispatch: {}
-
-permissions:
-  contents: write
-
-concurrency:
-  group: maruzen-watcher
-  cancel-in-progress: false
+    - cron: '0 10 * * *'
+  workflow_dispatch:
 
 jobs:
   check:
@@ -18,30 +11,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
 
-      - name: Diagnose Maruzen connectivity
-        run: |
-          echo "=== IPv4 NEW ==="
-          curl -4 -L --max-time 20 -A "Mozilla/5.0" -o /dev/null -sS -w "HTTP %{http_code}\n" https://maruzen-toy.com/photo/NEW/ || true
-          echo "=== IPv4 X ==="
-          curl -4 -L --max-time 20 -A "Mozilla/5.0" -o /dev/null -sS -w "HTTP %{http_code}\n" https://maruzen-toy.com/photo/X || true
+      - name: Clean install dependencies
+        run: npm ci
 
-      - run: npm install
-
-      - run: node check.mjs
+      - name: Run check script
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: node check.mjs
 
-      - name: Commit updated state.json
+      - name: Commit and push if changed
         run: |
           if ! git diff --quiet -- state.json; then
-            git config user.name "maruzen-watcher-bot"
-            git config user.email "actions@users.noreply.github.com"
+            git config user.name "GitHub Actions"
+            git config user.email "actions@github.com"
             git add state.json
-            git commit -m "chore: update state.json"
+            git commit -m "Update state.json"
             git push
           else
             echo "state.json に変更なし"
