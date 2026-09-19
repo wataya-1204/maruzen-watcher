@@ -22,6 +22,13 @@ jobs:
         with:
           node-version: 20
 
+      - name: Diagnose Maruzen connectivity
+        run: |
+          echo "=== IPv4 NEW ==="
+          curl -4 -L --max-time 20 -A "Mozilla/5.0" -o /dev/null -sS -w "HTTP %{http_code}\n" https://maruzen-toy.com/photo/NEW/ || true
+          echo "=== IPv4 X ==="
+          curl -4 -L --max-time 20 -A "Mozilla/5.0" -o /dev/null -sS -w "HTTP %{http_code}\n" https://maruzen-toy.com/photo/X || true
+
       - run: npm install
 
       - run: node check.mjs
