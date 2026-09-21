@@ -23,6 +23,7 @@ jobs:
       - name: Run check script
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          NODE_TLS_REJECT_UNAUTHORIZED: 0
         run: node check.mjs
 
       - name: Commit and push if changed
