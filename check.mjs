@@ -15,7 +15,10 @@ const UA =
 async function fetchWithPuppeteer(url) {
   let browser;
   try {
-    browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
+    });
     const page = await browser.newPage();
     await page.setUserAgent(UA);
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
