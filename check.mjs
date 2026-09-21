@@ -17,7 +17,13 @@ async function fetchWithPuppeteer(url) {
   try {
     browser = await puppeteer.launch({
       headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-gpu',
+        '--disable-dev-shm-usage',
+        '--single-process',
+      ],
     });
     const page = await browser.newPage();
     await page.setUserAgent(UA);
