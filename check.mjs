@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
 
 const NEW_URL = 'https://maruzen-toy.com/photo/NEW/';
 const X_URL = 'https://maruzen-toy.com/photo/X';
