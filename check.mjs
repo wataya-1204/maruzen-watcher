@@ -15,7 +15,7 @@ const UA =
 async function fetchWithPuppeteer(url) {
   let browser;
   try {
-    browser = await puppeteer.launch({
+    const launchConfig = {
       headless: 'new',
       args: [
         '--no-sandbox',
@@ -24,7 +24,12 @@ async function fetchWithPuppeteer(url) {
         '--disable-dev-shm-usage',
         '--single-process',
       ],
-    });
+    };
+    // GitHub Actions 環境では system Chromium を使用
+    if (process.env.GITHUB_ACTIONS === 'true') {
+      launchConfig.executablePath = '/usr/bin/chromium-browser';
+    }
+    browser = await puppeteer.launch(launchConfig);
     const page = await browser.newPage();
     await page.setUserAgent(UA);
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
