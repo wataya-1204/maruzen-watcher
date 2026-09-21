@@ -21,7 +21,9 @@ async function fetchWithRetry(url, retries = 2) {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.text();
     } catch (err) {
-      console.warn(`[attempt ${i + 1}/${retries + 1}] ${url} -> ${err.message}`);
+      const errMsg = err.message || err.toString();
+      console.warn(`[attempt ${i + 1}/${retries + 1}] ${url} -> ${errMsg}`);
+      console.warn(`  Error details: ${JSON.stringify(err)}`);
       if (i === retries) {
         return null;
       }
