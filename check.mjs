@@ -151,14 +151,16 @@ async function main() {
 
   console.log(`新製品URL: ${NEW_URL}`);
   console.log(`超特価URL: ${X_URL}`);
-  
-  const [newHtml, xHtml] = await Promise.all([fetchWithRetry(NEW_URL), fetchWithRetry(X_URL)]);
+   const newProducts = newHtml ? extractProducts(newHtml) : null;
+  const xProducts = xHtml ? extractProducts(xHtml) : null;
 
-  if (!newHtml && !xHtml) {
-    console.log('両ページとも取得に失敗しました。今回は状態を更新せず終了します。');
-    return;
-  }
+  if (newHtml) console.log('[NEW] HTML先頭500文字:', newHtml.substring(0, 500));
+  if (xHtml) console.log('[X] HTML先頭500文字:', xHtml.substring(0, 500));
 
+  if (newProducts) console.log(`[新製品コーナー] ${newProducts.length}件抽出`);
+  else console.log('[新製品コーナー] 取得失敗のためスキップ');
+  if (xProducts) console.log(`[超特価コーナー] ${xProducts.length}件抽出`);
+  else console.log('[超特価コーナー] 取得失敗のためスキップ');
   const newProducts = newHtml ? extractProducts(newHtml) : null;
   const xProducts = xHtml ? extractProducts(xHtml) : null;
 
