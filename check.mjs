@@ -14,17 +14,12 @@ const UA =
 async function fetchWithRetry(url, retries = 2) {
   for (let i = 0; i <= retries; i++) {
     try {
-      const res = await fetch(url, { 
-        headers: { 'User-Agent': UA },
-        timeout: 10000
-      });
+      const res = await fetch(url, { headers: { 'User-Agent': UA } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.text();
     } catch (err) {
-      const errMsg = err.message || err.toString();
-      console.warn(`[attempt ${i + 1}/${retries + 1}] ${url} -> ${errMsg}`);
-      console.warn(`  Error details: ${JSON.stringify(err)}`);
       if (i === retries) {
+        console.warn(`[warn] ${url} -> ${err.message}`);
         return null;
       }
       await new Promise(r => setTimeout(r, 1000 * (i + 1)));
@@ -149,20 +144,18 @@ async function main() {
   const isFirstRun = !state.initialized;
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
 
-  console.log(`新製品URL: ${NEW_URL}`);
-  console.log(`超特価URL: ${X_URL}`);
-   const newProducts = newHtml ? extractProducts(newHtml) : null;
+  const [newHtml, xHtml] = await Promise.all([fetchWithRetry(NEW_URL), fetchWithRetry(X_URL)]);
+
+  if (!newHtml && !xHtml) {
+    console.log('両ページとも取得に失敗しました。今回は状態を更新せず終了します。');
+    return;
+  }
+
+  const newProducts = newHtml ? extractProducts(newHtml) : null;
   const xProducts = xHtml ? extractProducts(xHtml) : null;
 
   if (newHtml) console.log('[NEW] HTML先頭500文字:', newHtml.substring(0, 500));
   if (xHtml) console.log('[X] HTML先頭500文字:', xHtml.substring(0, 500));
-
-  if (newProducts) console.log(`[新製品コーナー] ${newProducts.length}件抽出`);
-  else console.log('[新製品コーナー] 取得失敗のためスキップ');
-  if (xProducts) console.log(`[超特価コーナー] ${xProducts.length}件抽出`);
-  else console.log('[超特価コーナー] 取得失敗のためスキップ');
-  const newProducts = newHtml ? extractProducts(newHtml) : null;
-  const xProducts = xHtml ? extractProducts(xHtml) : null;
 
   if (newProducts) console.log(`[新製品コーナー] ${newProducts.length}件抽出`);
   else console.log('[新製品コーナー] 取得失敗のためスキップ');
