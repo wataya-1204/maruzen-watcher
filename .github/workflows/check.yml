@@ -8,6 +8,9 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    container:
+      image: ubuntu:latest
+      options: --security-opt apparmor=unconfined
     steps:
       - uses: actions/checkout@v4
 
