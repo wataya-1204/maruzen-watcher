@@ -4,8 +4,7 @@
   "type": "module",
   "description": "丸善商店の新着商品監視ツール",
   "dependencies": {
-    "cheerio": "^1.0.0-rc.12",
-    "puppeteer-core": "^25.11.0"
+    "cheerio": "^1.0.0-rc.12"
   },
   "scripts": {
     "test": "node check.mjs"

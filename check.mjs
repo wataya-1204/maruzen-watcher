@@ -1,6 +1,5 @@
 import * as cheerio from 'cheerio';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import puppeteer from 'puppeteer-core';
 
 const NEW_URL = 'https://maruzen-toy.com/photo/NEW/';
 const X_URL = 'https://maruzen-toy.com/photo/X';
@@ -12,34 +11,19 @@ const MAX_DISCORD_LEN = 2000;
 const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
-async function fetchWithPuppeteer(url) {
-  let browser;
-  try {
-    const launchConfig = {
-      headless: 'new',
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-gpu',
-        '--disable-dev-shm-usage',
-        '--single-process',
-      ],
-    };
-    // GitHub Actions 環境では system Chromium を使用
-    if (process.env.GITHUB_ACTIONS === 'true') {
-      launchConfig.executablePath = '/usr/bin/chromium-browser';
+async function fetchWithRetry(url, retries = 2) {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const res = await fetch(url, { headers: { 'User-Agent': UA } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.text();
+    } catch (err) {
+      if (i === retries) {
+        console.warn(`[warn] ${url} -> ${err.message}`);
+        return null;
+      }
+      await new Promise(r => setTimeout(r, 1000 * (i + 1)));
     }
-    browser = await puppeteer.launch(launchConfig);
-    const page = await browser.newPage();
-    await page.setUserAgent(UA);
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-    const html = await page.content();
-    await browser.close();
-    return html;
-  } catch (err) {
-    console.warn(`[warn] ${url} -> ${err.message}`);
-    if (browser) await browser.close();
-    return null;
   }
 }
 
@@ -160,7 +144,7 @@ async function main() {
   const isFirstRun = !state.initialized;
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
 
-  const [newHtml, xHtml] = await Promise.all([fetchWithPuppeteer(NEW_URL), fetchWithPuppeteer(X_URL)]);
+  const [newHtml, xHtml] = await Promise.all([fetchWithRetry(NEW_URL), fetchWithRetry(X_URL)]);
 
   if (!newHtml && !xHtml) {
     console.log('両ページとも取得に失敗しました。今回は状態を更新せず終了します。');
