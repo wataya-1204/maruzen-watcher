@@ -14,12 +14,15 @@ const UA =
 async function fetchWithRetry(url, retries = 2) {
   for (let i = 0; i <= retries; i++) {
     try {
-      const res = await fetch(url, { headers: { 'User-Agent': UA } });
+      const res = await fetch(url, { 
+        headers: { 'User-Agent': UA },
+        timeout: 10000
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.text();
     } catch (err) {
+      console.warn(`[attempt ${i + 1}/${retries + 1}] ${url} -> ${err.message}`);
       if (i === retries) {
-        console.warn(`[warn] ${url} -> ${err.message}`);
         return null;
       }
       await new Promise(r => setTimeout(r, 1000 * (i + 1)));
@@ -144,6 +147,9 @@ async function main() {
   const isFirstRun = !state.initialized;
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
 
+  console.log(`新製品URL: ${NEW_URL}`);
+  console.log(`超特価URL: ${X_URL}`);
+  
   const [newHtml, xHtml] = await Promise.all([fetchWithRetry(NEW_URL), fetchWithRetry(X_URL)]);
 
   if (!newHtml && !xHtml) {
