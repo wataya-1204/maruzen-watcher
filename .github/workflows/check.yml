@@ -8,9 +8,6 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
-    container:
-      image: ubuntu:latest
-      options: --security-opt apparmor=unconfined
     steps:
       - uses: actions/checkout@v4
 
@@ -20,19 +17,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install Chrome dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y chromium-browser
-
-      - name: Clear all caches and lock files
-        run: |
-          npm cache clean --force
-          rm -rf ~/.cache/puppeteer node_modules package-lock.json || true
-
       - name: Clean install dependencies
-        env:
-          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
         run: npm ci
 
       - name: Run check script
