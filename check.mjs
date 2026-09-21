@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import puppeteer from 'puppeteer';
 
 const NEW_URL = 'https://maruzen-toy.com/photo/NEW/';
 const X_URL = 'https://maruzen-toy.com/photo/X';
@@ -14,9 +15,13 @@ const UA =
 async function fetchWithRetry(url, retries = 2) {
   for (let i = 0; i <= retries; i++) {
     try {
-      const res = await fetch(url, { headers: { 'User-Agent': UA } });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.text();
+      const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+      const page = await browser.newPage();
+      await page.setUserAgent(UA);
+      await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+      const html = await page.content();
+      await browser.close();
+      return html;
     } catch (err) {
       if (i === retries) {
         console.warn(`[warn] ${url} -> ${err.message}`);
@@ -153,9 +158,6 @@ async function main() {
 
   const newProducts = newHtml ? extractProducts(newHtml) : null;
   const xProducts = xHtml ? extractProducts(xHtml) : null;
-
-  if (newHtml) console.log('[NEW] HTML先頭500文字:', newHtml.substring(0, 500));
-  if (xHtml) console.log('[X] HTML先頭500文字:', xHtml.substring(0, 500));
 
   if (newProducts) console.log(`[新製品コーナー] ${newProducts.length}件抽出`);
   else console.log('[新製品コーナー] 取得失敗のためスキップ');
